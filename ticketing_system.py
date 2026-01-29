@@ -1,20 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict
 
-# =========================
-# APPENDIX 1 – ZONES
-# =========================
 
 ZONES = {
     1: "Central",
     2: "Midtown",
     3: "Downtown"
 }
-
-# =========================
-# APPENDIX 2 – FARES (CENTS PER ZONE)
-# =========================
 
 FARES_PER_ZONE = {
     "adult": 2105,
@@ -25,10 +18,6 @@ FARES_PER_ZONE = {
 
 CURRENCY = "cents"
 
-
-# =========================
-# DATA MODELS
-# =========================
 
 @dataclass
 class Travellers:
@@ -49,16 +38,13 @@ class Ticket:
     travellers: Travellers
 
 
-# =========================
-# INPUT & VALIDATION
-# =========================
-
 def read_int(prompt: str) -> int:
     while True:
+        raw = input(prompt).strip()
         try:
-            return int(input(prompt))
+            return int(raw)
         except ValueError:
-            print("Please enter a valid number.")
+            print("Error: Please enter a valid whole number.")
 
 
 def read_zone(prompt: str) -> int:
@@ -66,7 +52,7 @@ def read_zone(prompt: str) -> int:
         zone = read_int(prompt)
         if zone in ZONES:
             return zone
-        print("Invalid zone. Please choose a valid zone number.")
+        print(f"Error: Invalid zone. Choose a zone between {min(ZONES)} and {max(ZONES)}.")
 
 
 def read_non_negative(prompt: str) -> int:
@@ -74,7 +60,7 @@ def read_non_negative(prompt: str) -> int:
         value = read_int(prompt)
         if value >= 0:
             return value
-        print("Value cannot be negative.")
+        print("Error: Value cannot be negative.")
 
 
 def read_travellers() -> Travellers:
@@ -86,10 +72,6 @@ def read_travellers() -> Travellers:
         student=read_non_negative("Students: ")
     )
 
-
-# =========================
-# CALCULATIONS
-# =========================
 
 def calculate_zones_travelled(start: int, end: int) -> int:
     return abs(end - start) + 1
@@ -104,10 +86,6 @@ def calculate_fares(travellers: Travellers, zones: int) -> Dict[str, int]:
     }
 
 
-# =========================
-# VOUCHER OUTPUT
-# =========================
-
 def generate_voucher(ticket: Ticket) -> None:
     costs = calculate_fares(ticket.travellers, ticket.zones_travelled)
     total_cost = sum(costs.values())
@@ -115,9 +93,9 @@ def generate_voucher(ticket: Ticket) -> None:
     print("\n" + "=" * 50)
     print("CTA TRAVEL VOUCHER")
     print("=" * 50)
-    print(f"Date/Time: {datetime.now()}")
+    print(f"Date/Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"From Zone {ticket.start_zone} ({ZONES[ticket.start_zone]})")
-    print(f"To Zone {ticket.end_zone} ({ZONES[ticket.end_zone]})")
+    print(f"To   Zone {ticket.end_zone} ({ZONES[ticket.end_zone]})")
     print(f"Zones Travelled: {ticket.zones_travelled}")
     print("-" * 50)
 
@@ -130,10 +108,6 @@ def generate_voucher(ticket: Ticket) -> None:
     print("=" * 50)
 
 
-# =========================
-# MAIN PROGRAM
-# =========================
-
 def main() -> None:
     print("CTA Underground Ticketing System")
 
@@ -143,19 +117,24 @@ def main() -> None:
             print(f"{z}: {name}")
 
         start = read_zone("Enter starting zone: ")
-        end = read_zone("Enter destination zone: ")
+
+        # Destination must be different to avoid invalid/pointless journey
+        while True:
+            end = read_zone("Enter destination zone: ")
+            if end != start:
+                break
+            print("Error: Destination zone cannot be the same as starting zone. Please re-enter.")
 
         travellers = read_travellers()
         if travellers.total() == 0:
-            print("No travellers entered. Try again.")
+            print("Error: No travellers entered. Try again.")
             continue
 
         zones = calculate_zones_travelled(start, end)
         ticket = Ticket(start, end, zones, travellers)
-
         generate_voucher(ticket)
 
-        again = input("\nIssue another voucher? (Y/N): ").lower()
+        again = input("\nIssue another voucher? (Y/N): ").strip().lower()
         if again != "y":
             print("Program ended.")
             break
